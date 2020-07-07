@@ -1,8 +1,10 @@
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
+const { nodeModuleNameResolver } = require('typescript');
 
 module.exports = {
   entry: './src/app/app.tsx',
+  //target: 'node',
   plugins: [
     new CleanWebpackPlugin({
       cleanAfterEveryBuildPatterns: ['public/build']

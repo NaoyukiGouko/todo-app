@@ -1,16 +1,23 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
+import TodoContainer from './TodoContainer';
+import Todo from './Todo';
 
-const App: React.FC<{ compiler: string, framework: string }> = (props) => {
+
+
+
+
+const App: React.FC = (props) => {
   return (
     <div>
-      <div>{props.compiler}</div>
-      <div>{props.framework}</div>
+      <TodoContainer 
+        todos= {null}
+      />
     </div>
   );
 }
 
 ReactDOM.render(
-  <App compiler="TypeScript" framework="React" />,
+  <App/>,
   document.getElementById("root")
 );
