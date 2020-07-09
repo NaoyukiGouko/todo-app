@@ -1,57 +1,107 @@
-import React from 'react';
+import React, {useState} from 'react';
 import Todo from './Todo';
 import TodoList from './TodoList';
 import TodoHeader from './TodoHeader';
 import TodoForm from './TodoForm';
-import fetch from 'isomorphic-unfetch';
+import IsShowAllButton from './isShowAllButton'
+import 'isomorphic-unfetch';
 
 interface ITodoContainer {
     todos: Todo[];　//登録されているtodo
     item: string; //フォームに入力されているテキスト
     isLoading: boolean //アクセス時非同期関数のsetStateまでtrueとしロード画面を表示
+    isShowAll: boolean //falseの場合完了済みのタスクを表示しない
 }
 
-class TodoContainer extends React.Component<any, ITodoContainer> {
-    constructor(props: any) {
-        super(props);
-        this.state = {
-            todos: props.todos,
-            item: '',
-            isLoading: true
-        };
-        this.checkTodo = this.checkTodo.bind(this);
-        this.deleteTodo = this.deleteTodo.bind(this);
-        this.updateItem = this.updateItem.bind(this);
-        this.addTodo = this.addTodo.bind(this);
-        this.getTodoList = this.getTodoList.bind(this);
-        //this.fetchApi = this.fetchApi.bind(this);
+    //APIを叩いてtodoを取り出す
+    async function getTodoList(setTodos, setIsLoading?): Promise<void> {
+        const newTodos: Todo[] = [];
+        //const fetch = require('isomorphic-unfetch');
+        const r = await fetch('//localhost:3000/');
+        const data = await r.json();
+        data.map(d => 
+            {   
+              const todo: Todo = new Todo();
+              todo.id = d.id;
+              todo.title = d.title;
+              todo.limit = d.limit;
+              todo.isDone = false;
+              newTodos.push(todo);
+            });
+            if(setIsLoading) {
+                setIsLoading(false);
+             }
+            setTodos(newTodos);
+           
+           for(let i = 0; i < newTodos.length; i++) {
+            if(Date.parse(newTodos[i].limit.toString()) <  Date.parse(new Date().toDateString())) {
+                alert('期限が過ぎているtodoがあります。');
+                return;
+            }
+           }
     }
+      
+
+//class TodoContainer extends React.Component<any, ITodoContainer> 
+export default function TodoContainer() {
+            const [todos, setTodos] = useState([]);
+            const [isLoading, setIsLoading] = useState(true);
+            const [isShowAll, setIsShowAll] = useState(true);
+            const [isLimit, setIsLimit] = useState(false);
+
+                if(isLoading) {
+                    getTodoList(setTodos, setIsLoading);
+                }
+                return (
+                    isLoading ? null :
+                    <div>
+                        <TodoHeader 
+                        todos={todos}
+                        />
+                        <TodoList 
+                        todos={todos} 
+                        checkTodo={checkTodo}
+                        deleteTodo={deleteTodo}
+                        setTodos={setTodos}
+                        isShowAll={isShowAll}
+                        setIsShowAll={setIsShowAll}
+                        />
+                        <IsShowAllButton
+                        isShowAll={isShowAll}
+                        setIsShowAll={setIsShowAll}
+                        />
+                        <TodoForm
+                        setTodos={setTodos}
+                        addTodo={addTodo}
+                        />
+                         
+                    </div>
+                    
+                );
+            }
 
     //チェックボックスのチェック処理
-    checkTodo(todo: Todo) :void{
-        const todos = this.state.todos.map(todo => {
-            return {id: todo.id, title: todo.title, isDone: todo.isDone};
+    function checkTodo(todo: Todo,todos: Todo[], setTodos) :void{
+        const newTodos = todos.map(todo => {
+            return {id: todo.id, title: todo.title, isDone: todo.isDone, limit: todo.limit};
         });
 
-        const pos = this.state.todos.map(todo => {
+        const pos = todos.map(todo => {
             return todo.id;
         }).indexOf(todo.id);
 
-        todos[pos].isDone = !todos[pos].isDone;
-        this.setState ({
-            todos: todos
-        });
+        newTodos[pos].isDone = !todos[pos].isDone;
+        setTodos(newTodos);
     }
 
     //todoの削除処理
-    deleteTodo(todo: Todo) :void{
+    function deleteTodo(todo: Todo, setTodos) :void{
         if(!confirm('このtodoを削除します。よろしいですか？')){
             return;
         }
         const id: string = todo.id.toString();
         const fetch = require('isomorphic-unfetch');
         const newTodos: Todo[] = [];
-
         fetch('//localhost:3000/' + id, {
             method: 'POST'
         }).then(r => r.json()).then(data => data.map(d => 
@@ -59,61 +109,47 @@ class TodoContainer extends React.Component<any, ITodoContainer> {
                 const todo: Todo = new Todo();
                 todo.id = d.id;
                 todo.title = d.title;
+                todo.limit = d.limit;
                 todo.isDone = false;
                 //console.log(todo);
                 newTodos.push(todo)
             })).then(() => {
-                this.setState({
-                    todos: newTodos,
-                    item: ''
-                });
+                setTodos(newTodos);
             });    
     }
 
-    //フォームのテキスト入力処理
-    updateItem(e) :void{
-        this.setState({
-            item: e.target.value
-        });
-    }
-
     //todoの登録処理
-    addTodo(e) :void{
-        e.preventDefault();
-
-        if (this.state.item.trim() === '') {
+    async function addTodo(item, setTodos, limit?) :Promise<void>{
+        const todo = new Todo;
+        todo.title = item;
+        limit ? todo.limit = limit : todo.limit = null;
+        if (item.trim() === '') {
             return;
         }
-
-        const item = {
-            title: this.state.item,
-        };
         const fetch = require('isomorphic-unfetch');
         const newTodos: Todo[] = [];
 
-        fetch('//localhost:3000/create', {
+        const r = await fetch('//localhost:3000/create', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
               },
-              body: JSON.stringify(item)
-        }).then(r => r.json()).then(data => data.map(d => 
-            {
-                const todo: Todo = new Todo();
-                todo.id = d.id;
-                todo.title = d.title;
-                todo.isDone = false;
-                //console.log(todo);
-                newTodos.push(todo)
-            })).then(() => {
-                this.setState({
-                    todos: newTodos,
-                    item: ''
-                });
-            });        
+              body: JSON.stringify(todo)
+        });
+        const data = await r.json();
+        data.map(d => 
+            {   
+              const todo: Todo = new Todo();
+              todo.id = d.id;
+              todo.title = d.title;
+              todo.limit = d.limit;
+              todo.isDone = false;
+              newTodos.push(todo);
+            });
+           setTodos(newTodos);       
     }
 
-    /**async getTodoList(): Promise<void> {
+    /**async getTodoList(): Promise<Todo[]> {
         const newTodos: Todo[] = [];
         const fetch = require('isomorphic-unfetch');
         const r = await fetch('//localhost:3000/');
@@ -126,30 +162,8 @@ class TodoContainer extends React.Component<any, ITodoContainer> {
               todo.isDone = false;
               newTodos.push(todo);
             });
-        this.setState({
-            todos: newTodos
-        })
+        return newTodos;
     }**/
-
-    //APIを叩いてtodoを取り出す
-    async getTodoList(): Promise<void> {
-        const newTodos: Todo[] = [];
-        const fetch = require('isomorphic-unfetch');
-        const r = await fetch('//localhost:3000/');
-        const data = await r.json();
-        data.map(d => 
-            {   
-              const todo: Todo = new Todo();
-              todo.id = d.id;
-              todo.title = d.title;
-              todo.isDone = false;
-              newTodos.push(todo);
-            });
-         this.setState({
-           todos: newTodos,
-           isLoading: false
-         })
-      }
 
     /**async fetchApi(): Promise<Todo[]> {
         const newTodos: Todo[] = [];
@@ -166,31 +180,6 @@ class TodoContainer extends React.Component<any, ITodoContainer> {
             return newTodos;
     }**/
 
-    render() {
-        if(this.state.isLoading) {
-            this.getTodoList();
-        }
-        return (
-            this.state.isLoading ? <h1>Now Loading...</h1> :
-            <div>
-                <TodoHeader 
-                todos={this.state.todos}
-                />
-                <TodoList 
-                todos={this.state.todos} 
-                checkTodo={this.checkTodo}
-                deleteTodo={this.deleteTodo}
-                />
-                <TodoForm
-                item={this.state.item}
-                updateItem={this.updateItem}
-                addTodo={this.addTodo}
-                />
-                 
-            </div>
-            
-        );
-    }
-}
+    
 
-export default TodoContainer;
+

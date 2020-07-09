@@ -1,6 +1,6 @@
 import React from 'react';
 
-function TodoHeader(props) {
+const TodoHeader = (props) => {
     const remaining = props.todos.filter(todo => {
         return !todo.isDone;
     });

@@ -4,14 +4,10 @@ import TodoContainer from './TodoContainer';
 import Todo from './Todo';
 
 
-
-
-
 const App: React.FC = (props) => {
   return (
     <div>
       <TodoContainer 
-        todos= {null}
       />
     </div>
   );
