@@ -101,7 +101,7 @@ function deleteTodo(todo: Todo, setTodos) :void{
   const fetch = require('isomorphic-unfetch');
   const newTodos: Todo[] = [];
   fetch('//localhost:3000/' + id, {
-    method: 'POST'
+    method: 'DELETE'
   }).then(r => r.json()).then(data => data.map(d => 
   {
     const todo: Todo = new Todo();
@@ -145,6 +145,7 @@ async function addTodo(item, setTodos, limit?) :Promise<void>{
     });
   setTodos(newTodos);       
 }
+
 
     
 
