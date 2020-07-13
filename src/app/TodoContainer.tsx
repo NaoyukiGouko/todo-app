@@ -71,6 +71,7 @@ export default function TodoContainer() {
       <TodoForm
       setTodos={setTodos}
       addTodo={addTodo}
+      todos={todos}
       />
             
     </div>
@@ -93,39 +94,27 @@ function checkTodo(todo: Todo,todos: Todo[], setTodos) :void{
 }
 
 //todoの削除処理
-function deleteTodo(todo: Todo, setTodos) :void{
+async function deleteTodo(todo: Todo, todos, setTodos) :Promise<void>{
   if(!confirm('このtodoを削除します。よろしいですか？')){
     return;
   }
   const id: string = todo.id.toString();
-  const fetch = require('isomorphic-unfetch');
-  const newTodos: Todo[] = [];
-  fetch('//localhost:3000/' + id, {
-    method: 'DELETE'
-  }).then(r => r.json()).then(data => data.map(d => 
-  {
-    const todo: Todo = new Todo();
-    todo.id = d.id;
-    todo.title = d.title;
-    todo.limit = d.limit;
-    todo.isDone = false;
-      newTodos.push(todo)
-  })).then(() => {
-    setTodos(newTodos);
-  });    
+  const r = await fetch('//localhost:3000/' + id, {method: 'DELETE'});
+  const deleteId = await r.json();
+  const newTodos: Todo[] = todos.filter(todo => {
+    return deleteId !== todo.id;
+  });
+  setTodos(newTodos);  
 }
 
 //todoの登録処理
-async function addTodo(item, setTodos, limit?) :Promise<void>{
+async function addTodo(item, setTodos, todos, limit?) :Promise<void>{
   const todo = new Todo;
   todo.title = item;
   limit ? todo.limit = limit : todo.limit = null;
   if (item.trim() === '') {
     return;
   }
-  const fetch = require('isomorphic-unfetch');
-  const newTodos: Todo[] = [];
-
   const r = await fetch('//localhost:3000/create', {
     method: 'POST',
     headers: {
@@ -133,16 +122,10 @@ async function addTodo(item, setTodos, limit?) :Promise<void>{
       },
       body: JSON.stringify(todo)
   });
-  const data = await r.json();
-  data.map(d => 
-    {   
-      const todo: Todo = new Todo();
-      todo.id = d.id;
-      todo.title = d.title;
-      todo.limit = d.limit;
-      todo.isDone = false;
-      newTodos.push(todo);
-    });
+  const newTodo = await r.json();
+  const newTodos = todos.slice();
+  newTodos.push(newTodo);
+
   setTodos(newTodos);       
 }
 
