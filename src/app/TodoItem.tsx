@@ -15,7 +15,7 @@ const TodoItem = (props) => {
         checked={props.todo.isDone}
         onChange={() => props.checkTodo(props.todo, props.todos, props.setTodos)} 
         />
-        <button className="button" onClick={() => props.deleteTodo(props.todo, props.setTodos)}>削除</button>
+        <button className="button" onClick={() => props.deleteTodo(props.todo, props.todos, props.setTodos)}>削除</button>
         <span className="todo-item">
           {props.todo.title}
         </span>

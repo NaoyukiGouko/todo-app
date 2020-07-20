@@ -7,7 +7,7 @@ const TodoForm = (props) => {
   return (
     <form onSubmit={e => {
       e.preventDefault();
-      props.addTodo(item, props.setTodos, limit)
+      props.addTodo(item, props.setTodos, props.todos, limit)
       setLimit('');
       setItem('');
     }} >
